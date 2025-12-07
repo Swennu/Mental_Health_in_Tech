@@ -11,4 +11,3 @@ if __name__ == "__main__":
     X = pd.get_dummies(X, drop_first=True)
     print("Final shape of features after encoding:", X.shape)
     print("Target:", Y.shape)
-

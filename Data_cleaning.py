@@ -60,6 +60,15 @@ def clean_data():
     }
     df['work_interfere'] = df['work_interfere'].map(work_interfere_map)
 
+    leave_map = {
+        "Don't know": 0,
+        "Somewhat easy": 1,
+        "Somewhat difficult": 2,
+        "Very difficult": 3
+    }
+    mod = df['leave'].fillna(df['leave'].mode()[0])
+    df['leave'] = mod
+    df['leave'] = df['leave'].map(leave_map)
     # Ordinal Encoding for 'no_employees'
     employee_map = {
         '1-5': 0,
@@ -84,7 +93,11 @@ def clean_data():
         'benefits',
         'seek_help',
         'mental_health_interview',
-        'mental_vs_physical'
+        'mental_vs_physical',
+        'self_employed',
+        'anonymity',
+        'care_options',
+        'wellness_program'
         ]
     for col in binary_cols:
         df[col] = df[col].replace({'Yes': 1, 'No': 0, 'Missing': np.nan})
