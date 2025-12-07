@@ -32,7 +32,7 @@ def clean_data():
     for term in nb_terms:
         df['Gender'] = df['Gender'].replace(term, "Non-Binary")
 
-    iter_list = ['Male', 'Female', 'Nonbinary']
+    iter_list = ['Male', 'Female', 'Non-Binary']
     df.loc[~df['Gender'].isin(iter_list), 'Gender'] = np.nan
 
     # Clean 'Age' column
