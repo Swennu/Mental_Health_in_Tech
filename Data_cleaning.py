@@ -98,7 +98,7 @@ def clean_data():
           ]
 
     for col in cols_to_clean:
-        df[col] = df[col].replace(uncertain_responses, 'Unsure/Missing')
+        df[col] = df[col].replace(uncertain_responses, np.nan)
 
     # Replace empty strings with NaN in all object type columns
     for col in df.select_dtypes(include=['object']).columns:
