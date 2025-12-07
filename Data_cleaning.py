@@ -5,7 +5,8 @@ import numpy as np
 def clean_data():
     # Load data
     df = pd.read_csv('data/survey.csv', na_values=['NA', ''])
-    df['Timestamp'] = pd.to_datetime(df['Timestamp'], errors='coerce')
+    # Drop unnecessary columns
+    df = df.drop(columns=['Timestamp', 'comments', 'state'], axis=1)
 
     # Clean 'Gender' column
     df['Gender'] = df['Gender'].str.strip().str.lower()
@@ -20,30 +21,23 @@ def clean_data():
         'female', 'f', 'woman', 'femake', 'female (cis)', 'cis female',
         'cis-female/femme', 'female (trans)', 'trans woman', 'trans-female'
         ]
-    nb_terms = [
-        'non-binary', 'genderqueer', 'androgyne', 'agender', 'enby', 'fluid',
-        'neuter', 'queer/she/they'
-    ]
 
     for term in male_terms:
         df['Gender'] = df['Gender'].replace(term, "Male")
     for term in female_terms:
         df['Gender'] = df['Gender'].replace(term, "Female")
-    for term in nb_terms:
-        df['Gender'] = df['Gender'].replace(term, "Non-Binary")
 
-    iter_list = ['Male', 'Female', 'Non-Binary']
+    df['Gender'] = df['Gender'].replace({
+        'Male': 1,
+        'Female': 0
+    })
+    iter_list = [1, 0]
     df.loc[~df['Gender'].isin(iter_list), 'Gender'] = np.nan
 
     # Clean 'Age' column
     df['Age'] = pd.to_numeric(df['Age'], errors='coerce')
     df = df[(df['Age'] >= 15) & (df['Age'] <= 120)]
     df['self_employed'] = df['self_employed'].fillna('No')
-
-    # States
-    df.loc[df['Country'] != 'United States', 'state'] = 'N/A'
-
-    df['state'] = df['state'].fillna('Missing')
 
     # Family History
     df['family_history'] = df['family_history'].fillna(np.nan)
@@ -66,9 +60,9 @@ def clean_data():
         "Somewhat difficult": 2,
         "Very difficult": 3
     }
-    mod = df['leave'].fillna(df['leave'].mode()[0])
-    df['leave'] = mod
     df['leave'] = df['leave'].map(leave_map)
+    df['leave'] = df['leave'].fillna(df['leave'].mode()[0])
+
     # Ordinal Encoding for 'no_employees'
     employee_map = {
         '1-5': 0,
@@ -82,39 +76,48 @@ def clean_data():
 
     # Binary Encoding for Yes/No columns
     binary_cols = [
-        'treatment',
-        'family_history',
-        'remote_work',
-        'tech_company',
-        'obs_consequence',
-        'mental_health_consequence',
-        'phys_health_consequence',
-        'supervisor',
-        'benefits',
-        'seek_help',
-        'mental_health_interview',
-        'mental_vs_physical',
-        'self_employed',
-        'anonymity',
-        'care_options',
-        'wellness_program'
-        ]
+        'treatment', 'family_history', 'remote_work', 'tech_company',
+        'obs_consequence', 'self_employed'
+    ]
+
     for col in binary_cols:
-        df[col] = df[col].replace({'Yes': 1, 'No': 0, 'Missing': np.nan})
+        df[col] = df[col].replace({'Yes': 1, 'No': 0}).astype('float')
 
-    # Consolidate missing/uncertain responses
-    uncertain_responses = ['Don\'t know', 'Not sure']
-    cols_to_clean = [
-        'benefits', 'care_options',
-        'wellness_program', 'seek_help',
-        'anonymity'
-          ]
+    # -------------------------------
+    # 8. CLEAN MULTICLASS COLUMNS
+    # Convert "Yes/No/Maybe/Some" style to numeric or NaN
+    # -------------------------------
+    multi_cols = [
+        'mental_health_consequence', 'phys_health_consequence',
+        'mental_health_interview', 'mental_vs_physical',
+        'seek_help', 'benefits', 'care_options',
+        'wellness_program', 'anonymity', 'supervisor', 'coworkers'
+    ]
 
-    for col in cols_to_clean:
-        df[col] = df[col].replace(uncertain_responses, np.nan)
+    for col in multi_cols:
+        df[col] = df[col].replace({'Yes': 1, 'No': 0})
 
-    # Replace empty strings with NaN in all object type columns
-    for col in df.select_dtypes(include=['object']).columns:
+        # Everything else = NaN (Maybe, Not sure, Some of them)
+        df.loc[~df[col].isin([0, 1]), col] = np.nan
+
+    # Fill missing values
+    fill_mode_cols = [
+        'benefits', 'care_options', 'wellness_program',
+        'anonymity', 'supervisor', 'coworkers', "Gender"
+    ]
+
+    for col in fill_mode_cols:
+        df[col] = df[col].fillna(df[col].mode()[0])
+
+    zero_fill = [
+        'mental_health_consequence', 'phys_health_consequence',
+        'mental_health_interview', 'mental_vs_physical', 'seek_help'
+    ]
+    for col in zero_fill:
+        df[col] = df[col].fillna(0)
+
+    # Remove empty strings
+    for col in df.select_dtypes(include='object'):
         df[col] = df[col].replace('', np.nan)
 
     return df
