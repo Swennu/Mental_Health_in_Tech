@@ -11,7 +11,12 @@ print(correlations)
 
 
 # Keep top correlated features
-X = df[['family_history', 'work_interfere', 'care_options', 'obs_consequence', 'leave']]
+X = df[[
+    'family_history',
+    'work_interfere',
+    'care_options',
+    'obs_consequence',
+    'leave']]
 y = df['treatment']
 
 X_train, X_test, y_train, y_test = train_test_split(

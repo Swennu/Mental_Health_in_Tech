@@ -21,12 +21,12 @@ def clean_data():
         'female', 'f', 'woman', 'femake', 'female (cis)', 'cis female',
         'cis-female/femme', 'female (trans)', 'trans woman', 'trans-female'
         ]
-
+    # Iterating through the terms and replacing them with the correct Term
     for term in male_terms:
         df['Gender'] = df['Gender'].replace(term, "Male")
     for term in female_terms:
         df['Gender'] = df['Gender'].replace(term, "Female")
-
+    # Making the gender column into a binary one
     df['Gender'] = df['Gender'].replace({
         'Male': 1,
         'Female': 0
@@ -83,10 +83,7 @@ def clean_data():
     for col in binary_cols:
         df[col] = df[col].replace({'Yes': 1, 'No': 0}).astype('float')
 
-    # -------------------------------
-    # 8. CLEAN MULTICLASS COLUMNS
     # Convert "Yes/No/Maybe/Some" style to numeric or NaN
-    # -------------------------------
     multi_cols = [
         'mental_health_consequence', 'phys_health_consequence',
         'mental_health_interview', 'mental_vs_physical',
